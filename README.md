@@ -5,3 +5,17 @@
 [![Build Status](https://travis-ci.com/tkf/VegaStreams.jl.svg?branch=master)](https://travis-ci.com/tkf/VegaStreams.jl)
 [![Codecov](https://codecov.io/gh/tkf/VegaStreams.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/tkf/VegaStreams.jl)
 [![Coveralls](https://coveralls.io/repos/github/tkf/VegaStreams.jl/badge.svg?branch=master)](https://coveralls.io/github/tkf/VegaStreams.jl?branch=master)
+
+### Example
+
+```julia
+using VegaStreams
+using VegaLite
+
+vls = vegastream(@vlplot(:line, x=:x, y=:y))
+
+for (x, y) in enumerate(randn(100))
+    sleep(0.01)
+    push!(vls, (x=x, y=y))
+end
+```
