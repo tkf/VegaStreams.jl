@@ -82,6 +82,32 @@ struct VegaStreamWindow
     processrow
 end
 
+"""
+    vegastream(vlspec; processrow=identity, kwargs...)
+
+Open a window containing a Vega-lite plot and a return a handle to it.
+This handle supports `push!` and `append!` to update the plot.
+
+# Examples
+```jldoctest
+julia> using VegaStreams
+       using VegaLite
+
+julia> vls = vegastream(@vlplot(:line, x=:x, y=:y));
+
+julia> push!(vls, (x=1, y=2));
+```
+
+# Arguments
+- `vlspec`: an objection `show`able as `application/vnd.vegalite.v3+json`
+  or `application/vnd.vegalite.v2+json`.  The `data` property is ignored.
+
+# Keyword Arguments
+- `processrow`: a callable to that process the item(s) given to `push!`
+  and `append!` before sending it/them to Vega-Lite.
+- Other keyword arguments are passed to `electrondisplay`.  By default,
+  `single_window=false` is used.
+"""
 function vegastream(vlspec; processrow=identity, kwargs...)
     html_page = vegalite_html(vlspec)
 
@@ -94,6 +120,7 @@ function vegastream(vlspec; processrow=identity, kwargs...)
         "text/html",
         HTML(html_page);
         single_window = false,
+        focus = true,
         kwargs...,
     )
     =#
@@ -110,8 +137,19 @@ function Base.append!(stream::VegaStreamWindow, rows)
     return stream
 end
 
+"""
+    vegastream(vlspec::Dict; ...)
+
+Interpret a dictionary as a Vega-Lite spec.  This is usable without
+importing `VegaLite`.
+"""
 vegastream(vlspec::Dict; kwargs...) = vegastream(SimpleVLSpec(vlspec); kwargs...)
 
+"""
+    vegastream(mark::Symbol = :line; processrow=NamedTuple{(:x, :y)}, ...)
+
+A shortcut for creating a simple plotter.
+"""
 vegastream(mark::Symbol = :line; kwargs...) =
     vegastream(SimpleVLSpec(mark); processrow = NamedTuple{(:x, :y)}, kwargs...)
 
