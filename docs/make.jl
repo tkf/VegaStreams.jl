@@ -9,7 +9,6 @@ makedocs(;
     repo="https://github.com/tkf/VegaStreams.jl/blob/{commit}{path}#L{line}",
     sitename="VegaStreams.jl",
     authors="Takafumi Arakaki <aka.tkf@gmail.com>",
-    assets=String[],
 )
 
 deploydocs(;

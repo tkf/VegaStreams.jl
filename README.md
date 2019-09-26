@@ -9,13 +9,13 @@
 ### Example
 
 ```julia
-using VegaStreams
-using VegaLite
+julia> using VegaStreams
+       using VegaLite
 
-vls = vegastream(@vlplot(:line, x=:x, y=:y))
+julia> vls = vegastream(@vlplot(:line, x=:x, y=:y));
 
-for (x, y) in enumerate(randn(100))
-    sleep(0.01)
-    push!(vls, (x=x, y=y))
-end
+julia> for (x, y) in enumerate(randn(100))
+           sleep(0.01)
+           push!(vls, (x=x, y=y))
+       end
 ```
