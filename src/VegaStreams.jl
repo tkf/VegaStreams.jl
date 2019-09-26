@@ -57,7 +57,7 @@ function vegalite_html(vlspec)
         var VIEW = null;
 
         function appendRows(rows) {
-            VIEW.insert('table', rows).run();
+            VIEW.insert('table', rows).resize().run();
         };
 
         var opt = {
