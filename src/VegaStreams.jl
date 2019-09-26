@@ -5,34 +5,24 @@ export vegastream
 using Base64
 using Electron
 using ElectronDisplay
-using ElectronDisplay: asset
+using ElectronDisplay: asset, displayhtml, newdisplay
 using JSON
 
-struct VegaStreamPlotter
-    vlspec
-
-    function VegaStreamPlotter(vlspec)
-        @assert showable("application/vnd.vegalite.v2+json", vlspec) ||
-            showable("application/vnd.vegalite.v3+json", vlspec)
-        return new(vlspec)
-    end
-end
-
 # Based on `ElectronDisplay._display_vegalite`:
-function Base.show(io::IO, ::MIME"text/html", plotter::VegaStreamPlotter)
-    if showable("application/vnd.vegalite.v2+json", plotter.vlspec)
+function vegalite_html(vlspec)
+    if showable("application/vnd.vegalite.v2+json", vlspec)
         major_version_vegalite = "2"
         major_version_vega = "3"
-    elseif showable("application/vnd.vegalite.v3+json", plotter.vlspec)
+    elseif showable("application/vnd.vegalite.v3+json", vlspec)
         major_version_vegalite = "3"
         major_version_vega = "5"
     else
-        error(plotter.vlspec, " does not support vegalite v2 or v3.")
+        error(vlspec, " does not support vegalite v2 or v3.")
     end
 
     payload = stringmime(
         MIME("application/vnd.vegalite.v$major_version_vegalite+json"),
-        plotter.vlspec,
+        vlspec,
     )
 
     html_page = """
@@ -84,7 +74,7 @@ function Base.show(io::IO, ::MIME"text/html", plotter::VegaStreamPlotter)
     # * https://vega.github.io/vega-lite/tutorials/streaming.html
     # * https://bl.ocks.org/domoritz/8e1e4da185e1a32c7e54934732a8d3d5
 
-    print(io, html_page)
+    return html_page
 end
 
 struct VegaStreamWindow
@@ -92,12 +82,21 @@ struct VegaStreamWindow
 end
 
 function vegastream(vlspec; kwargs...)
+    html_page = vegalite_html(vlspec)
+
+    # Using ElectronDisplay internals to support `single_window = false`.
+    d = newdisplay(; single_window=false, focus=true, kwargs...)
+    options = Dict("webPreferences" => Dict("webSecurity" => false))
+    window = displayhtml(d, html_page, options=options)
+    #=
     window = electrondisplay(
         "text/html",
-        VegaStreamPlotter(vlspec);
-        single_window = true,
+        HTML(html_page);
+        single_window = false,
         kwargs...,
     )
+    =#
+
     # TODO: wait for VIEW to be set?
     return VegaStreamWindow(window)
 end
