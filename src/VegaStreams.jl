@@ -2,7 +2,6 @@ module VegaStreams
 
 export vegastream
 
-using Base64
 using Electron
 using ElectronDisplay
 using ElectronDisplay: asset, displayhtml, newdisplay
@@ -20,7 +19,8 @@ function vegalite_html(vlspec)
         error(vlspec, " does not support vegalite v2 or v3.")
     end
 
-    payload = stringmime(
+    payload = sprint(
+        show,
         MIME("application/vnd.vegalite.v$major_version_vegalite+json"),
         vlspec,
     )
@@ -79,9 +79,10 @@ end
 
 struct VegaStreamWindow
     window::Electron.Window
+    processrow
 end
 
-function vegastream(vlspec; kwargs...)
+function vegastream(vlspec; processrow=identity, kwargs...)
     html_page = vegalite_html(vlspec)
 
     # Using ElectronDisplay internals to support `single_window = false`.
@@ -98,15 +99,38 @@ function vegastream(vlspec; kwargs...)
     =#
 
     # TODO: wait for VIEW to be set?
-    return VegaStreamWindow(window)
+    return VegaStreamWindow(window, processrow)
 end
 
 Base.push!(stream::VegaStreamWindow, row) = append!(stream, [row])
 
 function Base.append!(stream::VegaStreamWindow, rows)
-    json = JSON.json(collect(rows))
+    json = JSON.json(collect(map(stream.processrow, rows)))
     run(stream.window, "appendRows($json)")
     return stream
+end
+
+vegastream(vlspec::Dict; kwargs...) = vegastream(SimpleVLSpec(vlspec); kwargs...)
+
+vegastream(mark::Symbol = :line; kwargs...) =
+    vegastream(SimpleVLSpec(mark); processrow = NamedTuple{(:x, :y)}, kwargs...)
+
+struct SimpleVLSpec
+    params::Dict{String, Any}
+end
+
+SimpleVLSpec(mark::Symbol) =
+    SimpleVLSpec(Dict(
+        "mark" => mark,
+        "encoding" => Dict(
+            "x" => Dict("field" => "x"),
+            "y" => Dict("field" => "y"),
+        )
+    ))
+
+function Base.show(io::IO, ::MIME"application/vnd.vegalite.v3+json", vlspec::SimpleVLSpec)
+    JSON.print(io, vlspec.params)
+    return
 end
 
 end # module
