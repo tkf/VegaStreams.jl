@@ -9,12 +9,12 @@ using JSON
 
 # Based on `ElectronDisplay._display_vegalite`:
 function vegalite_html(vlspec)
-    if showable("application/vnd.vegalite.v2+json", vlspec)
-        major_version_vegalite = "2"
-        major_version_vega = "3"
-    elseif showable("application/vnd.vegalite.v3+json", vlspec)
+    if showable("application/vnd.vegalite.v3+json", vlspec)
         major_version_vegalite = "3"
         major_version_vega = "5"
+    elseif showable("application/vnd.vegalite.v2+json", vlspec)
+        major_version_vegalite = "2"
+        major_version_vega = "3"
     else
         error(vlspec, " does not support vegalite v2 or v3.")
     end
